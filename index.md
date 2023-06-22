@@ -3,7 +3,7 @@
 I am a NCDS intern.
 My responsibilities include:
 
-- Learning through NCDS 
-- Exploring through NCDS
+- Learning!
+- Exploring!
 
-[My reading List] (reading-list.html)
+
