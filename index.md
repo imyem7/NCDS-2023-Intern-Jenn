@@ -4,5 +4,5 @@ Jennifer Moon-Chung, who is currently pursuing her Masters in Library and Inform
 
 Moon-Chung will work on the Ecology of Infectious Diseases project with the Cary Institute from June 5 through August 11
 
-Project Workbook: [View HTML](ZooScore-EDA-presentation.html)
+Project Workbook: [View HTML](./ZooScore-EDA-presentation.html)
 
