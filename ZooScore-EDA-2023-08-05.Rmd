@@ -1,0 +1,619 @@
+---
+title: "ZooScore-EDA"
+author: "Jennifer Moon-Chung"
+date: '2023-08-07'
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r packages, include=FALSE}
+packages <- c("tidyverse","janitor") 
+sapply(packages, library, character.only = T) 
+setwd("~/Documents/han-lab/")
+```
+
+# 1. Figure out data
+## 1-1. What is ZooScore?
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# read in the data using readxl and use the clean_names function to clean up some of the column names
+ZOO<- readxl::read_xlsx("Zooscores_VR_Ver5.0_FinaL-2.xlsx") %>%
+  clean_names() 
+GID <- read.csv("~/Documents/han-lab/Gideon_SpeciesDisease_13Feb2023.csv") 
+TRAIT <- read.csv("~/Documents/han-lab/GideonDiseaseTraits_24012022.csv") 
+MDD <- read.csv("~/Documents/han-lab/MammalTaxonomyDictionary_22Nov2022.csv") 
+```
+
+ZooScore dataset compiles ZooScores determined for a variety of pathogens and parasites collected from the Global Mammal Parasite Database (GMPD). The image below shows the decision tree that a ZooScore is calculated with, ranging from a score of -1 representing a pathogen not found in humans to a score of 3 representing a pathogen capable of human to human transmission (e.g., SARS-CoV-2).
+
+![](zooscore-decisiontree.png)
+
+
+
+
+
+The first step I took was to thoroughly understand the dataset by creating various visuals. These included simple bar graphs to display counts, box plots to visualize distributions, and summary statistics to gain insights into the dataset's overall characteristics.
+
+## 1-2. Basic Information
+
+```{r message=FALSE, warning=FALSE}
+visdat::vis_dat(ZOO)+coord_flip()+scale_fill_viridis_d()+
+  theme(axis.text.x = element_text(angle = 0, hjust = 1))
+  
+```
+
+There are 28 columns and 2008 rows. Each column represents a variable related to the parasite and its zooscore calculated by investigators. Each row represents each parasite. Since the variable `parasite_corrected_name` plays a role of index, the total number of rows and the unique number of `parasite_corrected_name` should be matched. 
+To verify this, I displayed how many distinct values of `parasite_corrected_name` exist. 
+
+
+Some variables have too many missing values. In particular, `insect`, `commensal`, `xc_notes`, `pgf_zoo_score`, `pgf_c_score`, `pgf_notes`, `notes`, `print_ref`, `xc_citation`, `pgf_citation`, `pgf_more_citations`, `nematode`.
+
+
+
+
+
+# 2. Contextualize
+
+As I delved deeper into the data, I recognized the need to enhance its context. To achieve this, I merged **ZooScore** dataset with several related sources. For instance, I connected pathogens, species, and diseases using the **Gideon Pathogens-Species-Disease** dataset. Additionally, the **Gideon Disease Traits** dataset provided valuable insights. To better understand the animal groups, I utilized the Mammal Taxonomy Dictionary dataset. To visualize geographical distribution, I incorporated the **Natural Earth** dataset.
+
+
+![](contextualize.png)
+
+
+## 2-1. Meaningful Variables
+
+
+`xc_c_score` & `xc_zoo_score`
+
+The xc_c_score represents the cross-checked confidence score after review by multiple individuals.The score represents the confidence level in the ZooScore, with 1 indicating high confidence and 3 indicating low/no confidence.The values in xc_c_score appear to be more complete compared to confidence_score, as there are less missing (NA) values. All data points are within the expected range.
+
+
+```{r message=FALSE, warning=FALSE}
+ZOO%>%
+  mutate(xc_zoo_score= xc_zoo_score)%>%group_by(xc_zoo_score, xc_c_score)%>%
+  summarise(n_row = length(unique(na.omit(parasite_corrected_name))))%>%
+  ggplot(aes(x =xc_zoo_score,
+             y = xc_c_score))+
+  geom_tile(aes(fill=n_row), color = "black",
+            size = 0.6) +
+  geom_label(mapping = aes(label = n_row,
+                          color = n_row > median(n_row)),
+            size = 2.5)+
+  scale_color_manual(guide = 'none', values = c('TRUE' = '#D31245',
+                                                "FALSE" = '#091F40'))+
+  scale_fill_continuous()+
+  theme_bw()+
+  scale_x_continuous(breaks = -2:3,
+                     expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0),
+                     breaks = 1:3) +
+  labs(x = "ZooScore",
+       y = "Confidence Score",
+       fill = "Num") +
+  theme(aspect.ratio = 0.3) +
+  theme(axis.text.x = element_text(angle = 0, hjust=1))+
+  guides(fill = guide_colorbar(ticks = T,
+                               ticks.colour = "black",
+                               ticks.linewidth = 1,
+                               frame.colour = "black",
+                               frame.linewidth = 1,
+                               barwidth = 1,
+                               barheight = 7))
+```
+
+
+## 2-2 Species Richness in Zoonotic pathogens
+
+```{r selected, include=FALSE}
+selected<-ZOO[ZOO$xc_zoo_score >= 1, ]
+```
+
+
+```{r}
+data.frame(table(gsub("^\\s+|\\s+$", "", unlist(strsplit(GID$ParasiteGMPD, ","))))) %>%
+  left_join(selected, by = c("Var1" = "parasite_corrected_name")) %>% 
+  group_by(Var1) %>% 
+  summarise(species_richness = Freq, 
+            xc_zoo_score = mean(xc_zoo_score)) %>% 
+   filter(!is.na(xc_zoo_score)) %>% 
+  ggplot() +
+  geom_jitter(aes(x = xc_zoo_score,
+                  y = species_richness,
+                  color = as.factor(xc_zoo_score)),
+              width = 0.3, 
+              show.legend = F) +
+  
+  geom_boxplot(aes(group = xc_zoo_score, 
+                   y = species_richness,
+                   x = xc_zoo_score,
+                   color = as.factor(xc_zoo_score)),
+               alpha = 0.3, 
+               outlier.alpha = 0, 
+               show.legend = F, 
+               width = 0.4) +
+  labs(x = "ZooScore",
+       y = "Species richness") +
+  scale_color_brewer(palette = "Dark2") +
+  scale_x_continuous(breaks = 1:3,
+                     expand = c(0.1, 0.1)) +
+  scale_y_continuous(labels = scales::comma) +
+  theme(panel.background = element_rect(fill = "white",
+                                        color = "black"),
+        panel.grid.major = element_line(color = "grey80"),
+        aspect.ratio = 0.8)
+```
+
+
+
+
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(ggrepel)
+google<-selected%>%
+  mutate(xc_zoo_score= xc_zoo_score)%>%group_by(xc_zoo_score, googlehits_as_of_2_8_2017)%>%
+  summarise(n_row = length(unique(na.omit(parasite_corrected_name))))%>%
+  ggplot() +
+  geom_jitter(aes(x = xc_zoo_score,
+                   y = googlehits_as_of_2_8_2017,
+                   color = as.factor(xc_zoo_score), alpha = 0.5),
+               show.legend = FALSE) +
+    geom_label_repel(data = selected, aes(x = xc_zoo_score, y = googlehits_as_of_2_8_2017, label = parasite_corrected_name, in.segment.length = 0),
+                    box.padding = 0.5, point.padding = 0.2, size = 3, color = "black", max.overlaps = 70) +
+    labs(x = "ZooScore",
+         y = "Google Hits") +
+  #theme(aspect.ratio = 0.9) +
+    scale_color_brewer(palette = "Dark2") +
+  scale_x_continuous(breaks = 1:3,
+                     expand = c(0.2, 0.2)) +
+  scale_y_continuous(labels = scales::comma) +
+    theme(panel.background = element_rect(fill = "white", color = "black"),
+          panel.grid.major = element_line(color = "grey80"))
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(ggrepel)
+wofs<-selected%>%
+  mutate(xc_zoo_score= xc_zoo_score)%>%group_by(xc_zoo_score, wo_shits_as_of_2_6_2017)%>%
+  summarise(n_row = length(unique(na.omit(parasite_corrected_name))))%>%
+  ggplot() +
+    geom_jitter(aes(x = xc_zoo_score,
+                   y = wo_shits_as_of_2_6_2017,
+                   color = as.factor(xc_zoo_score), alpha = 0.5),
+               show.legend = FALSE) +
+    geom_label_repel(data = selected, aes(x = xc_zoo_score, y = wo_shits_as_of_2_6_2017, label = parasite_corrected_name, in.segment.length = 0),
+                    box.padding = 0.5, point.padding = 0.2, size = 3, color = "black", max.overlaps = 20) +
+    labs(x = "ZooScore",
+         y = "Web of Science Hits") +
+  #theme(aspect.ratio = 0.9) +
+    scale_color_brewer(palette = "Dark2") +
+  scale_x_continuous(breaks = 1:3,
+                     expand = c(0.1, 0.1)) +
+  scale_y_continuous(labels = scales::comma) +
+    theme(panel.background = element_rect(fill = "white", color = "black"),
+          panel.grid.major = element_line(color = "grey80"))
+```
+
+## 2-3. Zoonotic Pathogens Search Hits
+
+
+```{r, fig.width=8, fig.height=5.5, message=FALSE, warning=FALSE}
+library(patchwork)
+google+wofs
+```
+
+
+## 2-4. Species Richness by Order and Zooscore
+
+```{r, fig.width=8, fig.height=5, message=FALSE, warning=FALSE}
+p_all<- GID %>%
+  left_join(MDD[, c("species", "order")], by = "species") %>% #subsets the MDD dataset (species names and taxonomic information) to a couple of columns of interest and then joins them
+  left_join(ZOO, by = c("ParasiteGMPD" = "parasite_corrected_name")) %>%
+  group_by(ParasiteGMPD, order) %>% #we add order to our grouping here to make it easier to calculate species richness within each group
+  summarise(species_richness = length(unique(species)),
+            xc_zoo_score = mean(xc_zoo_score)) %>%
+  filter(!is.na(xc_zoo_score),
+         !is.na(order))%>%
+  mutate(order = tools::toTitleCase(tolower(order))) %>% 
+  ggplot(aes(x =xc_zoo_score,
+             y = order))+
+  geom_tile(aes(fill=species_richness), color = "black",
+            size = 0.6) +
+  geom_label(mapping = aes(label = species_richness,
+                          color = species_richness > mean(species_richness)),size = 3)+
+  scale_color_manual(guide = 'none', values = c('TRUE' = '#D31245',
+                                                "FALSE" = '#091F40'))+
+  scale_fill_continuous()+
+  theme_bw()+
+  scale_x_continuous(breaks = -2:3,
+                     expand = c(0, 0)) +
+  # scale_y_continuous(expand = c(0, 0),
+  #                    breaks = 1:3) +
+  labs(x = "ZooScore",
+       y = "Order",
+       fill = "species_richness") +
+  # theme(aspect.ratio = 0.5) +
+  theme(axis.text.x = element_text(angle = 0, hjust=1))+
+  guides(fill = guide_colorbar(ticks = T,
+                               ticks.colour = "black",
+                               ticks.linewidth = 1,
+                               frame.colour = "black",
+                               frame.linewidth = 1,
+                               barwidth = 1,
+                               barheight = 7))
+p_all
+
+```
+
+
+# 3. Area of Interest
+
+
+Through the process of exploration and contextualization, I pinpointed specific areas of interest. I was particularly drawn to pathogens with higher zooscores, as they indicated potential significance. Moreover, I identified popular animal groups such as Rodents, Carnivora, and Artiodactyla, which boast a substantial number of species. These areas became the foundation for my subsequent analyses
+
+
+
+
+## 3-1.Top 3 Orders 
+
+
+```{r, include=FALSE}
+# Rodentia
+top_rodent <- GID %>%
+  left_join(MDD[, c("species", "order")], by = "species") %>%
+  left_join(ZOO, by = c("ParasiteGMPD" = "parasite_corrected_name")) %>%
+  mutate(order = tools::toTitleCase(tolower(order))) %>%
+  filter(order == "Rodentia") %>%
+  filter(!is.na(xc_zoo_score)) %>%
+  group_by(ParasiteGMPD) %>%
+  summarise(species_richness = length(unique(species)),
+            xc_zoo_score = mean(xc_zoo_score)) %>%
+  arrange(desc(species_richness)) %>%
+  top_n(3, species_richness)
+top_rodent
+```
+
+
+```{r, include=FALSE}
+# Carnivora
+
+top_carnivora <- GID %>%
+  left_join(MDD[, c("species", "order")], by = "species") %>%
+  left_join(ZOO, by = c("ParasiteGMPD" = "parasite_corrected_name")) %>%
+  mutate(order = tools::toTitleCase(tolower(order))) %>%
+  filter(order == "Carnivora") %>%
+  filter(!is.na(xc_zoo_score)) %>%
+  group_by(ParasiteGMPD) %>%
+  summarise(species_richness = length(unique(species)),
+            xc_zoo_score = mean(xc_zoo_score)) %>%
+  arrange(desc(species_richness)) %>%
+  top_n(3, species_richness)
+top_carnivora
+```
+
+
+
+```{r, include=FALSE}
+# Artiodactyla
+top_artiodactyla <- GID %>%
+  left_join(MDD[, c("species", "order")], by = "species") %>%
+  left_join(ZOO, by = c("ParasiteGMPD" = "parasite_corrected_name")) %>%
+  mutate(order = tools::toTitleCase(tolower(order))) %>%
+  filter(order == "Artiodactyla") %>%
+  filter(!is.na(xc_zoo_score)) %>%
+  group_by(ParasiteGMPD) %>%
+  summarise(species_richness = length(unique(species)),
+            xc_zoo_score = mean(xc_zoo_score)) %>%
+  arrange(desc(species_richness)) %>%
+  top_n(3, species_richness)
+top_artiodactyla
+```
+
+
+
+
+
+```{r, include=FALSE}
+library(ggrepel)
+
+p_rodent<-GID %>%
+  left_join(MDD[, c("species", "order")], by = "species") %>%
+  left_join(ZOO, by = c("ParasiteGMPD" = "parasite_corrected_name")) %>%
+  mutate(order = tools::toTitleCase(tolower(order))) %>%
+  filter(order == "Rodentia") %>%
+  filter(!is.na(xc_zoo_score)) %>%
+  group_by(ParasiteGMPD) %>%
+  summarise(species_richness = length(unique(species)),
+            xc_zoo_score = mean(xc_zoo_score)) %>%
+  ggplot() +
+  geom_jitter(aes(x = xc_zoo_score,
+                 y = species_richness,
+                 color = as.factor(xc_zoo_score)),
+             show.legend = FALSE) +
+  geom_label_repel(data = top_rodent, aes(x = xc_zoo_score, y = species_richness, label = ParasiteGMPD),
+                  box.padding = 0.5, point.padding = 0.2, size = 3.5, color = "black", in.segment.length = 0, max.overlaps = 20) +
+  labs(x = "",
+       y = "Species richness") +
+  scale_color_brewer(palette = "Dark2") +
+  scale_x_continuous(limits = c(-2, 3),
+                     breaks = seq(-2, 3, 1)) +
+  theme(panel.background = element_rect(fill = "white", color = "black"),
+        panel.grid.major = element_line(color = "grey80"),
+        plot.title = element_text(hjust = 0.5))+
+  ggtitle("Rodent")
+p_rodent
+```
+
+
+
+
+```{r, include=FALSE}
+p_carnivora <- GID %>%
+  left_join(MDD[, c("species", "order")], by = "species") %>%
+  left_join(ZOO, by = c("ParasiteGMPD" = "parasite_corrected_name")) %>%
+  mutate(order = tools::toTitleCase(tolower(order))) %>%
+  filter(order == "Carnivora") %>%
+  filter(!is.na(xc_zoo_score)) %>%
+  group_by(ParasiteGMPD) %>%
+  summarise(species_richness = length(unique(species)),
+            xc_zoo_score = mean(xc_zoo_score)) %>%
+  ggplot() +
+  geom_jitter(aes(x = xc_zoo_score,
+                 y = species_richness,
+                 color = as.factor(xc_zoo_score)),
+             show.legend = FALSE) +
+  geom_label_repel(data = top_carnivora, aes(x = xc_zoo_score, y = species_richness, label = ParasiteGMPD),
+                  box.padding = 0.5, point.padding = 0.2, size = 3.5, color = "black",in.segment.length = 0, max.overlaps = 20) +
+  labs(x = "ZooScore",
+       y = "") +
+  scale_color_brewer(palette = "Dark2") +
+  scale_x_continuous(limits = c(-2, 3),
+                     breaks = seq(-2, 3, 1)) +
+  theme(panel.background = element_rect(fill = "white", color = "black"),
+        panel.grid.major = element_line(color = "grey80"),
+        plot.title = element_text(hjust = 0.5))+
+  ggtitle("Carnivora")
+p_carnivora
+```
+
+
+```{r, include=FALSE}
+p_artiodactyla <- GID %>%
+  left_join(MDD[, c("species", "order")], by = "species") %>%
+  left_join(ZOO, by = c("ParasiteGMPD" = "parasite_corrected_name")) %>%
+  mutate(order = tools::toTitleCase(tolower(order))) %>%
+  filter(order == "Artiodactyla") %>%
+  filter(!is.na(xc_zoo_score)) %>%
+  group_by(ParasiteGMPD) %>%
+  summarise(species_richness = length(unique(species)),
+            xc_zoo_score = mean(xc_zoo_score)) %>%
+  ggplot() +
+  geom_jitter(aes(x = xc_zoo_score,
+                 y = species_richness,
+                 color = as.factor(xc_zoo_score)),
+             show.legend = FALSE) +
+  geom_label_repel(data = top_artiodactyla, aes(x = xc_zoo_score, y = species_richness, label = ParasiteGMPD),
+                  box.padding = 0.5, point.padding = 0.2, size = 3.5, color = "black", in.segment.length = 0, max.overlaps = 20) +
+  labs(x = "",
+       y = "") +
+  scale_color_brewer(palette = "Dark2") +
+  scale_x_continuous(limits = c(-2, 3),
+                     breaks = seq(-2, 3, 1)) +
+  theme(panel.background = element_rect(fill = "white", color = "black"),
+        panel.grid.major = element_line(color = "grey80"),
+        plot.title = element_text(hjust = 0.5))+
+  ggtitle("Artiodactyla")
+p_artiodactyla
+```
+
+
+
+```{r, fig.width=10, fig.height=6, message=FALSE, warning=FALSE}
+#TOP 3 Orders
+p_rodent + theme(axis.title.x = element_blank()) + p_carnivora + theme(axis.title.x = element_text(face = "bold"), axis.title.y = element_blank()) + p_artiodactyla + theme(axis.title = element_blank()) 
+```
+
+
+
+
+# 4. Subset data
+
+To narrow down my focus, I decided to work with a subset of the data. I directed my attention towards specific pathogens that aligned with my areas of interest. These pathogens were Toxoplasma gondii, Borrelia burgdorferi, and Hymenolepis diminuta. By honing in on these pathogens, I could dive deeper into their associated attributes.
+
+
+
+
+# 5. Patterns and Trends
+
+Finally, I delved into exploring the patterns and trends within the chosen pathogens. I investigated the relationships between these pathogens and some interesting factors, such as animal groups and countries. This  analysis allowed me to uncover insights that could potentially inform further research and decision-making.
+
+
+## 5-1. Selected pathogens, thier respective groups and associated countries. 
+
+A Sankey plot shows the intricate relationships between pathogens with Zooscore = 3, their respective groups, and associated diseases. 
+
+```{r, include=FALSE}
+Z3<-ZOO[ZOO$parasite_corrected_name == "Toxoplasma gondii" |ZOO$parasite_corrected_name == "Borrelia burgdorferi"|ZOO$parasite_corrected_name == "Hymenolepis diminuta"  ,  ]
+
+SZ3<-GID %>%left_join(MDD[, c("species", "order")], by = "species") %>% 
+  right_join(Z3, by = c("ParasiteGMPD" = "parasite_corrected_name")) %>%
+  group_by(ParasiteGMPD, country, order) %>% 
+  summarise(
+            xc_zoo_score = mean(xc_zoo_score)) %>%
+  filter(!is.na(xc_zoo_score),!is.na(order))%>%
+  mutate(order = tools::toTitleCase(tolower(order)))
+SZ3
+names(SZ3)<-c("Pathogen", "Country", "Order",  "ZooScore")
+```
+
+
+
+
+
+```{r, include=FALSE}
+Z3<-ZOO[ZOO$parasite_corrected_name == "Toxoplasma gondii" |ZOO$parasite_corrected_name == "Borrelia burgdorferi"|ZOO$parasite_corrected_name == "Hymenolepis diminuta"  ,  ]
+
+SZ3<-GID %>%left_join(MDD[, c("species", "order")], by = "species") %>% 
+  right_join(Z3, by = c("ParasiteGMPD" = "parasite_corrected_name")) %>%
+  filter(!is.na(species),!is.na(order),!is.na(country))%>%
+  filter(country !="")%>%
+  mutate(order = tools::toTitleCase(tolower(order)))
+
+```
+
+```{r, include=FALSE}
+
+SZ3<-SZ3[,c("ParasiteGMPD", "order", "country")]
+
+```
+
+
+```{r, include=FALSE}
+# Step 1
+library(ggsankey)
+
+library(ggplot2)
+library(dplyr)
+
+SZ3L<- SZ3%>%
+  make_long(select=c( "order", "ParasiteGMPD", "country" ))
+SZ3L
+```
+
+
+
+```{r, fig.width=8, fig.height=11, message=FALSE, warning=FALSE  }
+library(ggsankey)
+# Chart 1
+SZ3L%>%ggplot(aes(x = x
+                     , next_x = next_x
+                     , node = node
+                     , next_node = next_node
+                     , fill = factor(node)
+                     , label = node)
+             )+
+  geom_sankey(flow.alpha = 0.8
+                      , node.color = "black"
+                      ,show.legend = TRUE)+
+  geom_sankey_label(size = 3, color = "black", fill= "white", hjust = 0)+
+  theme_bw()+
+  theme(legend.position = "none")+
+  theme(axis.title = element_blank(), axis.text.y = element_blank(),
+        axis.text.x = element_blank(), axis.ticks = element_blank(),
+        panel.grid = element_blank())+ scale_fill_viridis_d(option = "inferno")+ 
+  labs(title = "Animal groups-Selected Pathogens-Countries")+ labs(fill = 'Nodes')
+
+
+```
+
+
+
+
+
+## 5-2. Toxoplasma gondii in mapview 
+
+
+```{r, include=FALSE}
+TOX<-ZOO[ZOO$parasite_corrected_name =="Toxoplasma gondii" ,  ]
+
+STOX<-GID %>%right_join(TOX, by = c("ParasiteGMPD" = "parasite_corrected_name")) 
+
+```
+
+
+```{r, include=FALSE}
+library(mapview)
+VALS1 <- data.frame(table(STOX$country))
+CNTY <- rnaturalearth::ne_countries(returnclass = "sf") 
+CNTY[CNTY$name == "United States of America", "name"] <- "United States" 
+CNTY[CNTY$name == "Republic of Korea", "name"] <- "Peoples Dem. Rep. Korea"
+CNTY[CNTY$name == "South Korea", "name"] <- "Peoples Dem. Rep. Korea"
+CNTY[CNTY$name == "Democratic Rep. of Congo", "name"] <- "Republic of the Congo"
+CNTY[CNTY$name == "Dominican Rep.", "name"] <- "Dominican Republic"
+CNTY[CNTY$name == "Czech Republic", "name"] <- "Czechia"
+CNTY[CNTY$name == "S. Sudan", "name"] <- "South Sudan"
+CNTY[CNTY$name == "Bosnia and Herz.", "name"] <- "Bosnia and Herzegovina"
+```
+
+
+
+```{r}
+
+map1<-CNTY %>% #uses rnaturalearth data to grab an sf object of all countries
+  left_join(VALS1, by = c("name" = "Var1")) %>% #join the GID table data
+  mapview(zcol = "Freq") #mapview colored by frequency
+mapviewOptions("basemaps.color.shuffle" = FALSE)
+map1
+```
+
+
+
+## 5-3. Borrelia burgdorferi
+
+
+```{r, include=FALSE}
+BOR<-ZOO[ZOO$parasite_corrected_name =="Borrelia burgdorferi" ,  ]
+
+SBOR<-GID %>%right_join(BOR, by = c("ParasiteGMPD" = "parasite_corrected_name")) 
+
+```
+
+
+
+
+```{r}
+VALS2 <- data.frame(table(SBOR$country))
+
+map2<-CNTY %>% #uses rnaturalearth data to grab an sf object of all countries
+  left_join(VALS2, by = c("name" = "Var1")) %>% #join the GID table data
+  mapview(zcol = "Freq") #mapview colored by frequency
+mapviewOptions("basemaps.color.shuffle" = FALSE)
+map2
+```
+
+
+## 5-4. Hymenolepis diminuta
+
+
+```{r, include=FALSE}
+BOR<-ZOO[ZOO$parasite_corrected_name =="Hymenolepis diminuta" ,  ]
+
+SBOR<-GID %>%right_join(BOR, by = c("ParasiteGMPD" = "parasite_corrected_name")) 
+
+```
+
+
+
+
+```{r}
+VALS2 <- data.frame(table(SBOR$country))
+
+map2<-CNTY %>% #uses rnaturalearth data to grab an sf object of all countries
+  left_join(VALS2, by = c("name" = "Var1")) %>% #join the GID table data
+  mapview(zcol = "Freq") #mapview colored by frequency
+mapviewOptions("basemaps.color.shuffle" = FALSE)
+map2
+```
+
+
+## 5-5. Speceis Richness across Country
+
+
+```{r}
+VALS0 <- data.frame(table(GID$country))
+
+map3<-CNTY%>% #uses rnaturalearth data to grab an sf object of all countries
+  left_join(VALS0, by = c("name" = "Var1")) %>% #join the GID table data
+  mapview(zcol = "Freq") #mapview colored by frequency
+map3
+```
+
