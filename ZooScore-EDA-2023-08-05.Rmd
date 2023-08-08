@@ -214,13 +214,13 @@ google+wofs
 
 ## 2-4. Species Richness by Order and Zooscore
 
-```{r, fig.width=8, fig.height=5, message=FALSE, warning=FALSE}
+```{r, fig.width=8, fig.height=5}
 p_all<- GID %>%
-  left_join(MDD[, c("species", "order")], by = "species") %>% #subsets the MDD dataset (species names and taxonomic information) to a couple of columns of interest and then joins them
+  left_join(MDD[, c("species", "order")], by = "species") %>% 
   left_join(ZOO, by = c("ParasiteGMPD" = "parasite_corrected_name")) %>%
-  group_by(ParasiteGMPD, order) %>% #we add order to our grouping here to make it easier to calculate species richness within each group
+  group_by( order, xc_zoo_score)%>% 
   summarise(species_richness = length(unique(species)),
-            xc_zoo_score = mean(xc_zoo_score)) %>%
+            xc_zoo_score = mean(xc_zoo_score), .groups="drop") %>%
   filter(!is.na(xc_zoo_score),
          !is.na(order))%>%
   mutate(order = tools::toTitleCase(tolower(order))) %>% 
@@ -605,7 +605,7 @@ map2
 ```
 
 
-## 5-5. Speceis Richness across Country
+## 5-5. Species Richness across Country
 
 
 ```{r}
