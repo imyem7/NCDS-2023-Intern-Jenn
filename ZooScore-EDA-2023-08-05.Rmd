@@ -34,15 +34,26 @@ MDD <- read.csv("~/Documents/han-lab/MammalTaxonomyDictionary_22Nov2022.csv")
 
 ZooScore dataset compiles ZooScores determined for a variety of pathogens and parasites collected from the Global Mammal Parasite Database (GMPD). The image below shows the decision tree that a ZooScore is calculated with, ranging from a score of -1 representing a pathogen not found in humans to a score of 3 representing a pathogen capable of human to human transmission (e.g., SARS-CoV-2).
 
-![](zooscore-decisiontree.png)
+![](zooscores.png)
+
+
+
+Scores range from -1 to 3, with 1 to 3 indicating zoonotic potential.
+
+## 1-2. Importance of Exploring ZooScore 
+* Revealing the Unexplored
+* Enhance understanding of zoonotic diseases and their origins.
+* Highlight candidates for potential investigation.
 
 
 
 
+
+
+## 1-3. Basic Information
 
 The first step I took was to thoroughly understand the dataset by creating various visuals. These included simple bar graphs to display counts, box plots to visualize distributions, and summary statistics to gain insights into the dataset's overall characteristics.
 
-## 1-2. Basic Information
 
 ```{r message=FALSE, warning=FALSE}
 visdat::vis_dat(ZOO)+coord_flip()+scale_fill_viridis_d()+
@@ -58,11 +69,16 @@ Some variables have too many missing values. In particular, `insect`, `commensal
 
 
 
+## 1-4. Data quality
+
+**Strength**: A broad spectrum of over 2,000 pathogens
+
+**Limitation**: Lack of complete biological context for pathogens
 
 
 # 2. Contextualize
 
-As I delved deeper into the data, I recognized the need to enhance its context. To achieve this, I merged **ZooScore** dataset with several related sources. For instance, I connected pathogens, species, and diseases using the **Gideon Pathogens-Species-Disease** dataset. Additionally, the **Gideon Disease Traits** dataset provided valuable insights. To better understand the animal groups, I utilized the Mammal Taxonomy Dictionary dataset. To visualize geographical distribution, I incorporated the **Natural Earth** dataset.
+As I delved deeper into the data, I recognized the need to enhance its context. To achieve this, I merged **ZooScore** dataset with several related sources. For instance, I connected pathogens, species, and diseases using the **Gideon Pathogens-Species-Disease** dataset. Additionally, the **Gideon Disease Traits** dataset provided valuable insights. To better understand the animal groups, I utilized the **Mammal Taxonomy Dictionary** dataset. To visualize geographical distribution, I incorporated the **Natural Earth** dataset.
 
 
 ![](contextualize.png)
@@ -518,8 +534,8 @@ SZ3L%>%ggplot(aes(x = x
 
 
 
+## 5-2. Species Richness across Country
 
-## 5-2. Toxoplasma gondii in mapview 
 
 
 ```{r, include=FALSE}
@@ -547,6 +563,27 @@ CNTY[CNTY$name == "Bosnia and Herz.", "name"] <- "Bosnia and Herzegovina"
 
 
 ```{r}
+VALS0 <- data.frame(table(GID$country))
+
+map3<-CNTY%>%
+  left_join(VALS0, by = c("name" = "Var1")) %>%
+  mapview(zcol = "Freq") 
+map3
+```
+
+
+
+To gain a more contextualized view, I mapped the countries. This map illustrates the prevalence of species associated with all pathogens. It seems they are distributed all over the world. 
+
+
+
+## 5-3. Toxoplasma gondii in mapview 
+
+Now, as you examine the distribution by each pathogen, you'll notice some interesting trends. Several species capable of causing toxoplasmosis are concentrated in the United States. 
+
+
+
+```{r}
 
 map1<-CNTY %>% #uses rnaturalearth data to grab an sf object of all countries
   left_join(VALS1, by = c("name" = "Var1")) %>% #join the GID table data
@@ -557,7 +594,11 @@ map1
 
 
 
-## 5-3. Borrelia burgdorferi
+## 5-4. Borrelia burgdorferi
+
+
+species associated with ticks show a significant presence in Germany, the U.S, and China. This suggests a higher likelihood of emerging Lyme disease in these regions due to the prevalence of tick-borne pathogens.
+
 
 
 ```{r, include=FALSE}
@@ -584,6 +625,10 @@ map2
 ## 5-4. Hymenolepis diminuta
 
 
+Furthermore, the Rat Tapeworm shows a strong presence in Laos, Iran, and China. This prevalence may be linked to diseases primarily related to the rat tapeworm, often manifesting as intestinal infections.
+
+
+
 ```{r, include=FALSE}
 BOR<-ZOO[ZOO$parasite_corrected_name =="Hymenolepis diminuta" ,  ]
 
@@ -605,15 +650,5 @@ map2
 ```
 
 
-## 5-5. Species Richness across Country
 
-
-```{r}
-VALS0 <- data.frame(table(GID$country))
-
-map3<-CNTY%>% #uses rnaturalearth data to grab an sf object of all countries
-  left_join(VALS0, by = c("name" = "Var1")) %>% #join the GID table data
-  mapview(zcol = "Freq") #mapview colored by frequency
-map3
-```
 
