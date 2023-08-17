@@ -7,11 +7,13 @@ Moon-Chung will work on the Ecology of Infectious Diseases project with the Cary
 - Project Initial Exploration: [View HTML](./ZooScore-EDA-Basic-Info.html)  
 - Project Final Workbook: [View HTML](./ZooScore-EDA-presentation.html)
 
-  ## VarNameWizard R Shiny App
+
+## VarNameWizard R Shiny App
 
 Explore my interactive data utility, the VarNameWizard! This R Shiny app, developed during my internship, empowers users to effortlessly enhance their data organization by converting messy variable names into clean, informative labels.
 
-<iframe src="https://yem7.shinyapps.io/VarNameWizard/" width="800" height="600"></iframe>
+[Open VarNameWizard App](https://yem7.shinyapps.io/VarNameWizard/)
+
 
 
 
