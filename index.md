@@ -12,7 +12,7 @@ Moon-Chung will work on the Ecology of Infectious Diseases project with the Cary
 
 Explore my interactive data utility, the VarNameWizard! This R Shiny app, developed during my internship, empowers users to effortlessly enhance their data organization by converting messy variable names into clean, informative labels.
 
-[Open VarNameWizard App](https://yem7.shinyapps.io/VarNameWizard/)
+- [Open VarNameWizard App](https://yem7.shinyapps.io/VarNameWizard/)
 
 
 
