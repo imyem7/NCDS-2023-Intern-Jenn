@@ -1,21 +1,36 @@
-# 2023 NCDS Data Librarianship Internship
+# 2023 NCDS Data Librarianship Internship Portfolio
 
-Jennifer Moon-Chung, who is currently pursuing her Masters in Library and Information Science (MLIS) degree at the University of Pittsburgh, was recently selected to participate in the 2023 National Center for Data Services Data Librarianship Internship program. The program aims to provide practical experiences to interns while working with a mentor in a guided environment on structured, data-related projects.
+Jennifer Ye Moon-Chung | August 2023
 
-Moon-Chung will work on the Ecology of Infectious Diseases project with the Cary Institute from June 5 through August 11
+Welcome to my portfolio showcasing my journey as an intern at the National Center for Data Services (NCDS). This internship has provided me with a unique opportunity to delve into the dynamic landscape of data librarianship and engage with a vibrant community of professionals.
 
-- Project Initial Exploration: [View HTML](./ZooScore-EDA-Basic-Info.html)  
-- Project Final Workbook: [View HTML](./ZooScore-EDA-presentation.html)
+## Introduction to NCDS Data Librarian Internship
 
+The NCDS Data Librarian Internship is an immersive program designed to equip aspiring data librarians with hands-on experiences and essential skills. Throughout my internship, I embarked on a transformative journey marked by skill development, collaboration, and meaningful insights into the world of data services.
 
-## VarNameWizard R Shiny App
+## Project Outcomes
 
-Explore my interactive data utility, the VarNameWizard! This R Shiny app, developed during my internship, empowers users to effortlessly enhance their data organization by converting messy variable names into clean, informative labels.
+**1. Utilizing the Power of EDA and Visualizations for Effective Data Exploration**
 
-- [Open VarNameWizard App](https://yem7.shinyapps.io/VarNameWizard/)
+In this project, I leveraged R Markdown notebooks to delve into the ZooScore dataset. I employed exploratory data analysis (EDA) techniques and engaging visualizations to comprehend the dataset's nuances and unearth valuable insights. This outcome reflects my ability to navigate complex datasets, extract meaningful information, and drive data-driven discussions.
 
+Check out the detailed exploration: [Project Initial Exploration](./ZooScore-EDA-Basic-Info.html)
 
+**2.Creating User-Friendly Visuals to Showcase Data Interpretations**
 
+I focused on translating my data interpretations and analyses into user-friendly visual representations. Through a carefully designed report, I aimed to convey insights effectively to diverse audiences. This outcome underscores my commitment to clear communication and impactful data presentation.
+
+Explore the visualizations: [Project Final Workbook](./ZooScore-EDA-presentation.html)
+
+**3.Interactive Data Utility, the VarNameWizard**
+
+The VarNameWizard is a web application I developed to address challenges posed by messy column names in datasets. This tool streamlines the process of converting column names, generating data dictionaries, and validating data integrity. The VarNameWizard reflects my innovation and problem-solving skills, as well as my dedication to enhancing data accessibility and usability.
+
+Try out the VarNameWizard: [Open VarNameWizard App](https://yem7.shinyapps.io/VarNameWizard/)
+
+This portfolio provides a glimpse into my internship journey, showcasing my growth as a data librarian and my commitment to pushing the boundaries of data services. As I continue my professional journey in library and information science, I look forward to harnessing these skills, fostering a spirit of continual learning, and making impactful contributions within the field. Thank you for joining me on this exciting endeavor!
+
+For inquiries, contact me at: yem7@pitt.edu
 
 
 ## Acknowledgment
