@@ -5,7 +5,7 @@ Jennifer Ye Moon-Chung, August 2023
 
 ## Introduction to NCDS Data Librarian Internship
 
-The NCDS Data Librarian Internship is an immersive program designed to equip aspiring data librarians with hands-on experiences and essential skills. Throughout my internship, I embarked on a transformative journey marked by skill development, collaboration, and meaningful insights into the world of data services.
+The NCDS Data Librarian Internship is an immersive program designed to equip aspiring data librarians with hands-on experiences and essential skills. Throughout my internship, I embarked on a transformative journey marked by skill development, collaboration, and meaningful insights into the world of data services.[NCDS Internship Info](https://www.nnlm.gov/about/centers/ncds/internship)
 
 ## Project Outcomes
 
