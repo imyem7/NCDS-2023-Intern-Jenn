@@ -1,8 +1,7 @@
-# 2023 NCDS Data Librarianship Internship Portfolio
+# 2023 NCDS Data Librarianship Internship 
 
 Jennifer Ye Moon-Chung, August 2023
 
-This internship has provided me with a unique opportunity to delve into the dynamic landscape of data librarianship and engage with a vibrant community of professionals.
 
 ## Introduction to NCDS Data Librarian Internship
 
