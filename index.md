@@ -1,8 +1,8 @@
 # 2023 NCDS Data Librarianship Internship Portfolio
 
-Jennifer Ye Moon-Chung | August 2023
+Jennifer Ye Moon-Chung, August 2023
 
-Welcome to my portfolio showcasing my journey as an intern at the National Center for Data Services (NCDS). This internship has provided me with a unique opportunity to delve into the dynamic landscape of data librarianship and engage with a vibrant community of professionals.
+This internship has provided me with a unique opportunity to delve into the dynamic landscape of data librarianship and engage with a vibrant community of professionals.
 
 ## Introduction to NCDS Data Librarian Internship
 
